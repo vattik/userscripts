@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2021.01.05
+// @version         2021.01.25
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -14,7 +14,7 @@
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
 // @grant           none
-// @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.1/page-dom.js
+// @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.2/page-dom.js
 // ==/UserScript==
 
 // Структура полей для фильмов: https://kodi.wiki/view/NFO_files/Movies
@@ -27,22 +27,8 @@
 
 // TODO: страница с эпизодами https://www.kinopoisk.ru/film/464963/episodes/
 
-class Test {
-    test() {
-        console.log('Test OK!');
-    }
-}
-
-import { PageDOM } from 'https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.1/page-dom.js';
-
-class KinoPoiskNFO {
-    constructor() {
-        this.pageDom = new PageDOM();
-        this.test = new Test();
-        export { this.test as Test };
-    }
-
-    getCSS() {
+{
+    const getCSS = function() {
         return `
             #k2n-container {
                 margin-bottom: 10px;
@@ -79,55 +65,52 @@ class KinoPoiskNFO {
                 border-width: 12px 7px 0 7px;
             }
         `;
-    }
+    };
 
-    isSeries() {
+    const isSeries = function() {
         if (/https:\/\/www\.kinopoisk\.ru\/series\/.+/i.test(location.href)
             || /^.+ \([^)(]*сериал(?:[ ,]|\))/i.test(document.title)
-            || /^\([^)(]*сериал(?:[ ,]|\))/i.test( this.pageDom.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][2]') )
-            || this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]', null, true, /сезон/i)
+            || /^\([^)(]*сериал(?:[ ,]|\))/i.test( PageDOM.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][2]') )
+            || PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]', null, true, /сезон/i)
         ) {
             return true;
         }
         return false;
     }
 
-    normalizeFileName(fileName) {
+    const normalizeFileName = function(fileName) {
         return fileName.replace(':', '.').replace('?', '').replace('«', '').replace('»', '');
     }
 
-    init() {
-//        this.pageDom = new PageDOM();
-//        this.test = new Test();
-        this.test.test();
+    const init = function() {
         const patternPersonName = /^[A-zА-яЙйЁё][-.\'’A-zА-яЙйЁё ]*[A-zА-яЙйЁё]$/; // г-н. Джозеф Гордон-Левитт
         const kIDs = /\/(\d+)\//.exec(location.href);
         const kID = kIDs !== null ? kIDs[1] : null;
-        const kName = this.pageDom.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][1]');
-        const kNameOriginal = this.pageDom.findSingleNode('//*[contains(@class,"styles_originalTitle__") and count(descendant::text()[normalize-space()])=1]');
-        const kYear = this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]/*[normalize-space()][1]', null, true, /^\d{4}$/);
-        let kCountries = this.pageDom.findNodes('//*[count(*)=2 and *[1][normalize-space()="Страна"]]/*[2]/a[normalize-space()]', null, /^[А-ЯЙЁ].*[А-яЙйЁё]$/);
+        const kName = PageDOM.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][1]');
+        const kNameOriginal = PageDOM.findSingleNode('//*[contains(@class,"styles_originalTitle__") and count(descendant::text()[normalize-space()])=1]');
+        const kYear = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]/*[normalize-space()][1]', null, true, /^\d{4}$/);
+        let kCountries = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Страна"]]/*[2]/a[normalize-space()]', null, /^[А-ЯЙЁ].*[А-яЙйЁё]$/);
         if (kCountries.indexOf(null) !== -1) {
             kCountries = [];
         }
-        let kGenres = this.pageDom.findNodes('//*[count(*)=2 and *[1][normalize-space()="Жанр"]]/*[2]/*[normalize-space()][1]/a[normalize-space()]', null, /^[а-яйё].*[а-яйё]$/);
+        let kGenres = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Жанр"]]/*[2]/*[normalize-space()][1]/a[normalize-space()]', null, /^[а-яйё].*[а-яйё]$/);
         if (kGenres.indexOf(null) !== -1) {
             kGenres = [];
         }
-        const kSlogan = this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Слоган"]]/*[2]/*[normalize-space()][1][not(normalize-space()="-")]');
-        let kDirectors = this.pageDom.findNodes('//*[count(*)=2 and *[1][normalize-space()="Режиссёр" or normalize-space()="Режиссер"]]/*[2]/a[normalize-space()]', null, patternPersonName);
+        const kSlogan = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Слоган"]]/*[2]/*[normalize-space()][1][not(normalize-space()="-")]');
+        let kDirectors = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Режиссёр" or normalize-space()="Режиссер"]]/*[2]/a[normalize-space()]', null, patternPersonName);
         if (kDirectors.indexOf(null) !== -1) {
             kDirectors = [];
         }
-        const kAge = this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Возраст"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, /^\d{1,2}\+$/);
-        const kMPAA = this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Рейтинг MPAA"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, /^[-A-Z\d]+$/);
-//        const kDuration = this.pageDom.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Время"]]/*[2]/*[normalize-space()][1]', null, false, /^(\d+)\s*мин/i);
-        const kPlotRows = this.pageDom.findNodes('//div[ not(.//div) and contains(@class,"styles_filmSynopsis__")]/p[string-length(normalize-space())>1]');
-        let kActors = this.pageDom.findNodes('//*/*[normalize-space()][1][starts-with(normalize-space(),"В главных ролях")]/following-sibling::*[1]/li/a[normalize-space()]', null, patternPersonName);
+        const kAge = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Возраст"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, /^\d{1,2}\+$/);
+        const kMPAA = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Рейтинг MPAA"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, /^[-A-Z\d]+$/);
+        // const kDuration = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Время"]]/*[2]/*[normalize-space()][1]', null, false, /^(\d+)\s*мин/i);
+        const kPlotRows = PageDOM.findNodes('//div[ not(.//div) and contains(@class,"styles_filmSynopsis__")]/p[string-length(normalize-space())>1]');
+        let kActors = PageDOM.findNodes('//*/*[normalize-space()][1][starts-with(normalize-space(),"В главных ролях")]/following-sibling::*[1]/li/a[normalize-space()]', null, patternPersonName);
         if (kActors.indexOf(null) !== -1) {
             kActors = [];
         }
-        const nfoType = this.isSeries() ? 'tvshow' : 'movie';
+        const nfoType = isSeries() ? 'tvshow' : 'movie';
         let nfoContent = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
         nfoContent += `<${nfoType}>\n`;
         nfoContent += `    <uniqueid type="kinopoisk" default="true">${kID}</uniqueid>\n`;
@@ -153,9 +136,9 @@ class KinoPoiskNFO {
         } else if (kMPAA) {
             nfoContent += `    <mpaa>USA:${kMPAA}</mpaa>\n`; // USA:PG-13
         }
-//        if (kDuration) {
-//            nfoContent += `    <runtime>${kDuration}</runtime>\n`; // not actual for modern media centers
-//        }
+        // if (kDuration) {
+        //     nfoContent += `    <runtime>${kDuration}</runtime>\n`; // not actual for modern media centers
+        // }
         if (kPlotRows.length) {
             // https://kodi.wiki/view/Label_Formatting
             nfoContent += `    <plot>${kPlotRows.join('[CR][CR]').replace(/\s+/g, ' ')}</plot>\n`;
@@ -170,9 +153,9 @@ class KinoPoiskNFO {
         const outputElement = document.createElement('div');
         outputElement.id = 'k2n-container';
         outputElement.dataset.nfo = nfoContentEncoded;
-        let outputHtml = `<style>${this.getCSS()}</style>\n`;
+        let outputHtml = `<style>${getCSS()}</style>\n`;
         const outputFileURI = 'data:text/plain;charset=utf-8,' + nfoContentEncoded;
-        const outputFileName = nfoType === 'tvshow' ? 'tvshow' : this.normalizeFileName(kName + ` (${kYear})`);
+        const outputFileName = nfoType === 'tvshow' ? 'tvshow' : normalizeFileName(kName + ` (${kYear})`);
         outputHtml += `<a href="#" title="Открыть на новой странице" onclick="w=window.open(); w.document.body.innerHTML='<pre></pre>'; w.document.querySelector('pre').textContent=decodeURIComponent(document.getElementById('k2n-container').dataset.nfo); return false;">Посмотреть .NFO</a>\n`;
         outputHtml += `<a href="${outputFileURI}" download="${outputFileName}.nfo" title="${outputFileName}.nfo">Скачать .NFO (${Math.ceil(nfoContent.length/1000)} КБ)</a>\n`;
         outputElement.innerHTML = outputHtml;
@@ -180,13 +163,5 @@ class KinoPoiskNFO {
         outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
     }
 
-    
-
-    
+    setTimeout(init, 500);
 }
-
-(function() {
-    'use strict';
-    const kNfo = new KinoPoiskNFO();
-    setTimeout(kNfo.init, 500);
-})();
