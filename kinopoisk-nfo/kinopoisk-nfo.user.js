@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2021.01.25
+// @version         2021.01.26
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -131,10 +131,11 @@
         kDirectors.forEach(function(kDirector, index) {
             nfoContent += `    <director${index === 0 ? ' clear="true"' : ''}>${kDirector.replace('’', "'")}</director>\n`;
         });
+        if (kMPAA !== null) {
+            nfoContent += `    <mpaa>${kMPAA}</mpaa>\n`; // PG-13
+        }
         if (kAge !== null) {
-            nfoContent += `    <mpaa>Russia:${kAge}</mpaa>\n`; // Russia:12+
-        } else if (kMPAA) {
-            nfoContent += `    <mpaa>USA:${kMPAA}</mpaa>\n`; // USA:PG-13
+            nfoContent += `    <certification>Russia:${kAge}</certification>\n`; // Russia:12+ / USA:PG-13
         }
         // if (kDuration) {
         //     nfoContent += `    <runtime>${kDuration}</runtime>\n`; // not actual for modern media centers
