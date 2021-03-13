@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2020.10.08
+// @version         2021.03.13
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -88,5 +88,5 @@ const akp = {
 };
 
 $(document).ready(function(){
-    akp.init();
+    setTimeout(akp.init, 500);
 });
