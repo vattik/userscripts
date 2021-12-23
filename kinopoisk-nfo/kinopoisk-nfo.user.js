@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2021.01.27
+// @version         2021.12.23
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -76,11 +76,11 @@
             return true;
         }
         return false;
-    }
+    };
 
     const normalizeFileName = function(fileName) {
         return fileName.replace(':', '.').replace('?', '').replace('«', '').replace('»', '');
-    }
+    };
 
     const init = function() {
         const patternPersonName = /^[A-zА-яЙйЁё][-.\'’A-zА-яЙйЁё ]*[A-zА-яЙйЁё]\.?$/; // г-н. Сергей Бодров мл.
@@ -151,18 +151,22 @@
         });
         nfoContent += `</${nfoType}>\n`;
         const nfoContentEncoded = encodeURIComponent(nfoContent);
-        const outputElement = document.createElement('div');
-        outputElement.id = 'k2n-container';
-        outputElement.dataset.nfo = nfoContentEncoded;
-        let outputHtml = `<style>${getCSS()}</style>\n`;
         const outputFileURI = 'data:text/plain;charset=utf-8,' + nfoContentEncoded;
         const outputFileName = nfoType === 'tvshow' ? 'tvshow' : normalizeFileName(kName + ` (${kYear})`);
+        let outputHtml = `<style>${getCSS()}</style>\n`;
         outputHtml += `<a href="#" title="Открыть на новой странице" onclick="w=window.open(); w.document.body.innerHTML='<pre></pre>'; w.document.querySelector('pre').textContent=decodeURIComponent(document.getElementById('k2n-container').dataset.nfo); return false;">Посмотреть .NFO</a>\n`;
         outputHtml += `<a href="${outputFileURI}" download="${outputFileName}.nfo" title="${outputFileName}.nfo">Скачать .NFO (${Math.ceil(nfoContent.length/1000)} КБ)</a>\n`;
-        outputElement.innerHTML = outputHtml;
-        const outputRoot = document.querySelector('div[class*="styles_title__"]');
-        outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
-    }
+        const btnsInsert = setInterval(() => {
+            if (document.getElementById('k2n-container') === null) {
+                const outputElement = document.createElement('form');
+                outputElement.id = 'k2n-container';
+                outputElement.dataset.nfo = nfoContentEncoded;
+                outputElement.innerHTML = outputHtml;
+                const outputRoot = document.querySelector('div[class*="styles_title__"]');
+                outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
+            }
+        }, 2000);
+    };
 
-    setTimeout(init, 500);
+    init();
 }
