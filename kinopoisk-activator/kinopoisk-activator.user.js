@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2021.03.13
+// @version         2021.12.22
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -10,9 +10,9 @@
 // @updateURL       https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @supportURL      https://github.com/vattik/userscripts/issues
+// @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
-// @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
 // @grant           none
 // @require         https://code.jquery.com/jquery-3.5.1.min.js#md5=dc5e7f18c8d36ac1d3d4753a87c98d0a
 // ==/UserScript==
@@ -29,14 +29,20 @@ const akp = {
         const kName = $('h1[itemprop="name"] > *:parent:eq(0)').text();
         const links = [].concat(
             akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**'),
-            akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
+            akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
+            // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
         );
         let html = '';
         links.forEach((value, index) => {
             html += `<a href="${value}" target="_blank">Смотреть (источник ${index+1})</a>\n`;
         });
         if (html) {
-            $('div[class^="styles_title__"]').after(`<div id="akp-container">${html}<style>${akp.getCSS()}</style></div>`);
+            const btnsInsert = setInterval(() => {
+                if (document.getElementById('akp-container') === null) {
+                    // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
+                    $('div[class^="styles_title__"]').after(`<form id="akp-container">${html}<style>${akp.getCSS()}</style></form>`);
+                }
+            }, 2000);
         }
     },
     getLinks: (kID, kName, pattern) => {
@@ -87,6 +93,6 @@ const akp = {
     }
 };
 
-$(document).ready(function(){
-    setTimeout(akp.init, 500);
+$(function() {
+    akp.init();
 });
