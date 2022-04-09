@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2021.12.23
+// @version         2022.4.7
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -86,6 +86,15 @@
         const patternPersonName = /^[A-zА-яЙйЁё][-.\'’A-zА-яЙйЁё ]*[A-zА-яЙйЁё]\.?$/; // г-н. Сергей Бодров мл.
         const kIDs = /\/(\d+)\//.exec(location.href);
         const kID = kIDs !== null ? kIDs[1] : null;
+        /*
+            film name sources:
+            document.querySelector('script[type="application/ld+json"]').textContent;
+            document.querySelector('script#__NEXT_DATA__').textContent;
+            JSON.parse();
+            document.querySelector('img.film-poster').getAttribute('alt');
+            document.querySelector('meta[property="og:title"]').getAttribute('content');
+            document.querySelector('meta[property="twitter:title"]').getAttribute('content');
+        */
         const kName = PageDOM.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][1]');
         const kNameOriginal = PageDOM.findSingleNode('//*[contains(@class,"styles_originalTitle__") and count(descendant::text()[normalize-space()])=1]');
         const kYear = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]/*[normalize-space()][1]', null, true, /^\d{4}$/);
@@ -154,7 +163,7 @@
         const outputFileURI = 'data:text/plain;charset=utf-8,' + nfoContentEncoded;
         const outputFileName = nfoType === 'tvshow' ? 'tvshow' : normalizeFileName(kName + ` (${kYear})`);
         let outputHtml = `<style>${getCSS()}</style>\n`;
-        outputHtml += `<a href="#" title="Открыть на новой странице" onclick="w=window.open(); w.document.body.innerHTML='<pre></pre>'; w.document.querySelector('pre').textContent=decodeURIComponent(document.getElementById('k2n-container').dataset.nfo); return false;">Посмотреть .NFO</a>\n`;
+        outputHtml += `<a href="#" id="k2n-view" title="Открыть на новой странице">Посмотреть .NFO</a>\n`;
         outputHtml += `<a href="${outputFileURI}" download="${outputFileName}.nfo" title="${outputFileName}.nfo">Скачать .NFO (${Math.ceil(nfoContent.length/1000)} КБ)</a>\n`;
         const btnsInsert = setInterval(() => {
             if (document.getElementById('k2n-container') === null) {
@@ -164,6 +173,12 @@
                 outputElement.innerHTML = outputHtml;
                 const outputRoot = document.querySelector('div[class*="styles_title__"]');
                 outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
+                document.getElementById('k2n-view').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const w = window.open();
+                    w.document.body.innerHTML = '<pre></pre>';
+                    w.document.querySelector('pre').textContent = decodeURIComponent(document.getElementById('k2n-container').dataset.nfo);
+                });
             }
         }, 2000);
     };
