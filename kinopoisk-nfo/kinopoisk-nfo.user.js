@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2022.4.8
+// @version         2022.4.9
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -15,6 +15,7 @@
 // @match           *://*.kinopoisk.ru/series/*
 // @grant           none
 // @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.2/page-dom.js
+// @require         https://raw.githubusercontent.com/vattik/libs/main/kp-web/0.0.4/kp-web.js
 // ==/UserScript==
 
 // Структура полей для фильмов: https://kodi.wiki/view/NFO_files/Movies
@@ -67,58 +68,33 @@
         `;
     };
 
-    const isSeries = function() {
-        if (/https:\/\/www\.kinopoisk\.ru\/series\/.+/i.test(location.href)
-            || /^.+ \([^)(]*сериал(?:[ ,]|\))/i.test(document.title)
-            || /^\([^)(]*сериал(?:[ ,]|\))/i.test( PageDOM.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][2]') )
-            || PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]', null, true, /сезон/i)
-        ) {
-            return true;
-        }
-        return false;
-    };
-
     const normalizeFileName = function(fileName) {
         return fileName.replace(':', '.').replace('?', '').replace('«', '').replace('»', '');
     };
 
     const init = function() {
-        const patternCountry = /^[А-яЙйЁё][-(\'’ А-яЙйЁё]*[А-яЙйЁё]\)?$/; // Папуа - Новая Гвинея, Германия (ФРГ), острова Теркс и Кайкос, Кот-д’Ивуар
-        const patternGenre = /^[А-яЙйЁё][- А-яЙйЁё]*[А-яЙйЁё]$/; // детектив    |    реальное ТВ    |    фильм-нуар
-        const patternPersonName = /^[A-zА-яЙйЁё][-.\'’A-zА-яЙйЁё ]*[A-zА-яЙйЁё]\.?$/; // г-н. Сергей Бодров мл.
-        const patternMPAA = /^(?:MPAA[:\s]+)?([A-Z\d][-A-Z\d]*)$/i; // R    |    PG-13
-        const kIDs = /\/(\d+)\//.exec(location.href);
-        const kID = kIDs !== null ? kIDs[1] : null;
-        const kName = PageDOM.findSingleNode('//h1[normalize-space(@itemprop)="name"]/*[normalize-space()][1]');
-        const kNameOriginal = PageDOM.findSingleNode('//*[contains(@class,"styles_originalTitle__") and count(descendant::text()[normalize-space()])=1]');
-        const kYear = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Год производства"]]/*[2]/*[normalize-space()][1]', null, true, /^\d{4}$/);
-        let kCountries = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Страна"]]/*[2]/a[normalize-space()]', null, patternCountry);
-        if (kCountries.indexOf(null) !== -1) {
-            kCountries = [];
-        }
-        let kGenres = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Жанр"]]/*[2]/*[normalize-space()][1]/a[normalize-space()]', null, patternGenre);
-        if (kGenres.indexOf(null) !== -1) {
-            kGenres = [];
-        }
-        const kSlogan = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Слоган"]]/*[2]/*[normalize-space()][1][not(normalize-space()="-" or normalize-space()="—")]');
-        let kDirectors = PageDOM.findNodes('//*[count(*)=2 and *[1][normalize-space()="Режиссёр" or normalize-space()="Режиссер"]]/*[2]/a[normalize-space()]', null, patternPersonName);
-        if (kDirectors.indexOf(null) !== -1) {
-            kDirectors = [];
-        }
-        const kAge = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Возраст"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, /^\d{1,2}\+$/);
-        const kMPAA = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Рейтинг MPAA"]]/*[2]/descendant::text()[normalize-space()][1]/..', null, false, patternMPAA);
-        // const kDuration = PageDOM.findSingleNode('//*[count(*)=2 and *[1][normalize-space()="Время"]]/*[2]/*[normalize-space()][1]', null, false, /^(\d{1,3})\s*мин/i);
-        const kPlotRows = PageDOM.findNodes('//div[ not(.//div) and contains(@class,"styles_filmSynopsis__")]/p[string-length(normalize-space())>1]');
-        let kActors = PageDOM.findNodes('//*/*[normalize-space()][1][starts-with(normalize-space(),"В главных ролях")]/following-sibling::*[1]/li/a[normalize-space()]', null, patternPersonName);
-        if (kActors.indexOf(null) !== -1) {
-            kActors = [];
-        }
-        const nfoType = isSeries() ? 'tvshow' : 'movie';
+        const kpData = kpWeb.parse();
+
+        const kID = kpData.id;
+        const nfoType = kpData.type === 'series' ? 'tvshow' : 'movie';
+        const kName = kpData.name;
+        const kNameOriginal = kpData.origname;
+        const kYear = kpData.year;
+        const kCountries = kpData.country;
+        const kGenres = kpData.genre;
+        const kSlogan = kpData.slogan;
+        const kDirectors = kpData.director;
+        const kAge = kpData.age;
+        const kMPAA = kpData.mpaa;
+        // const kDuration = kpData.duration;
+        const kActors = kpData.actor;
+        const kPlotRows = kpData.description !== '' ? kpData.description.split('\n\n') : [];
+
         let nfoContent = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
         nfoContent += `<${nfoType}>\n`;
         nfoContent += `    <uniqueid type="kinopoisk" default="true">${kID}</uniqueid>\n`;
         nfoContent += `    <title>${kName}</title>\n`;
-        if (kNameOriginal) {
+        if (kNameOriginal !== '') {
             nfoContent += `    <originaltitle>${kNameOriginal}</originaltitle>\n`;
         }
         nfoContent += `    <year>${kYear}</year>\n`;
@@ -128,16 +104,16 @@
         kGenres.forEach(function(kGenre, index) {
             nfoContent += `    <genre${index === 0 ? ' clear="true"' : ''}>${kGenre}</genre>\n`;
         });
-        if (kSlogan) {
+        if (kSlogan !== '') {
             nfoContent += `    <tagline>${kSlogan}</tagline>\n`;
         }
         kDirectors.forEach(function(kDirector, index) {
             nfoContent += `    <director${index === 0 ? ' clear="true"' : ''}>${kDirector.replace('’', "'")}</director>\n`;
         });
-        if (kMPAA !== null) {
+        if (kMPAA !== '') {
             nfoContent += `    <mpaa>${kMPAA}</mpaa>\n`; // PG-13
         }
-        if (kAge !== null) {
+        if (kAge !== '') {
             nfoContent += `    <certification>Russia:${kAge}</certification>\n`; // Russia:12+ / USA:PG-13
         }
         // if (kDuration) {
