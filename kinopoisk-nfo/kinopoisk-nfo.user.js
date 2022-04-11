@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2022.4.9
+// @version         2022.4.10
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -69,7 +69,7 @@
     };
 
     const normalizeFileName = function(fileName) {
-        return fileName.replace(':', '.').replace('?', '').replace('«', '').replace('»', '');
+        return fileName.replace(/:/g, '.').replace(/[?«»]/g, '');
     };
 
     const init = function() {
@@ -99,7 +99,7 @@
         }
         nfoContent += `    <year>${kYear}</year>\n`;
         kCountries.forEach(function(kCountry, index) {
-            nfoContent += `    <country${index === 0 ? ' clear="true"' : ''}>${kCountry.replace('’', "'")}</country>\n`;
+            nfoContent += `    <country${index === 0 ? ' clear="true"' : ''}>${kCountry.replace(/’/g, "'")}</country>\n`;
         });
         kGenres.forEach(function(kGenre, index) {
             nfoContent += `    <genre${index === 0 ? ' clear="true"' : ''}>${kGenre}</genre>\n`;
@@ -108,7 +108,7 @@
             nfoContent += `    <tagline>${kSlogan}</tagline>\n`;
         }
         kDirectors.forEach(function(kDirector, index) {
-            nfoContent += `    <director${index === 0 ? ' clear="true"' : ''}>${kDirector.replace('’', "'")}</director>\n`;
+            nfoContent += `    <director${index === 0 ? ' clear="true"' : ''}>${kDirector.replace(/’/g, "'")}</director>\n`;
         });
         if (kMPAA !== '') {
             nfoContent += `    <mpaa>${kMPAA}</mpaa>\n`; // PG-13
@@ -125,7 +125,7 @@
         }
         kActors.forEach(function(kActor, index) {
             nfoContent += `    <actor${index === 0 ? ' clear="true"' : ''}>\n`;
-            nfoContent += `        <name>${kActor.replace('’', "'")}</name>\n`;
+            nfoContent += `        <name>${kActor.replace(/’/g, "'")}</name>\n`;
             nfoContent += '    </actor>\n';
         });
         nfoContent += `</${nfoType}>\n`;
