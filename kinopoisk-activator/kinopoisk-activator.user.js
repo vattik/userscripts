@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2021.12.22
+// @version         2022.07.16
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -13,6 +13,7 @@
 // @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
+// @noframes
 // @grant           none
 // @require         https://code.jquery.com/jquery-3.5.1.min.js#md5=dc5e7f18c8d36ac1d3d4753a87c98d0a
 // ==/UserScript==
@@ -20,30 +21,50 @@
 'use strict';
 
 const akp = {
+    currentKID: '',
+    htmlBtns: '',
     init: () => {
-        akp.insertHTML();
+        const btnsInsert = setInterval(() => {
+            if (document.getElementById('akp-container') === null) {
+                // for new document
+                akp.buttons.generate();
+                akp.buttons.insert();
+            } else if (akp.getKID() && akp.currentKID && akp.getKID() !== akp.currentKID) {
+                // for AJAX-modified document
+                akp.buttons.remove();
+                akp.buttons.generate();
+                akp.buttons.insert();
+            }
+        }, 2000);
     },
-    insertHTML: () => {
-        const kIDs = /\/(\d+)\//.exec(location.href);
-        const kID = kIDs !== null ? kIDs[1] : null;
-        const kName = $('h1[itemprop="name"] > *:parent:eq(0)').text();
-        const links = [].concat(
-            akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**'),
-            akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
-            // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
-        );
-        let html = '';
-        links.forEach((value, index) => {
-            html += `<a href="${value}" target="_blank">Смотреть (источник ${index+1})</a>\n`;
-        });
-        if (html) {
-            const btnsInsert = setInterval(() => {
-                if (document.getElementById('akp-container') === null) {
-                    // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
-                    $('div[class^="styles_title__"]').after(`<form id="akp-container">${html}<style>${akp.getCSS()}</style></form>`);
-                }
-            }, 2000);
-        }
+    buttons: {
+        generate: () => {
+            const kID = akp.getKID();
+            const kName = $('h1[itemprop="name"] > *:parent:eq(0)').text();
+            const links = [].concat(
+                akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**'),
+                akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
+                // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
+            );
+            let html = '';
+            links.forEach((value, index) => {
+                html += `<a href="${value}" target="_blank">Смотреть (источник ${index+1})</a>\n`;
+            });
+            if (html) {
+                akp.htmlBtns = html;
+            }
+        },
+        insert: () => {
+            if (akp.htmlBtns) {
+                // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
+                $('div[class^="styles_title__"]').after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS()}</style></form>`);
+                akp.currentKID = akp.getKID();
+            }
+        },
+        remove: () => {
+            akp.htmlBtns = '';
+            document.getElementById('akp-container').remove();
+        },
     },
     getLinks: (kID, kName, pattern) => {
         if (!pattern) {
@@ -57,6 +78,10 @@ const akp = {
             links.push( pattern.replace('**SEARCH**', encodeURIComponent(kName)) );
         }
         return links;
+    },
+    getKID: () => {
+        const kIDs = /\/(\d+)\//.exec(location.href);
+        return kIDs !== null ? kIDs[1] : null;
     },
     getCSS: () => {
         return `
