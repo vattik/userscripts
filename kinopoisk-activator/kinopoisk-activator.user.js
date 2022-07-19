@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2022.07.16
+// @version         2022.07.17
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -10,15 +10,17 @@
 // @updateURL       https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @supportURL      https://github.com/vattik/userscripts/issues
-// @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
+// @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
 // @noframes
 // @grant           none
-// @require         https://code.jquery.com/jquery-3.5.1.min.js#md5=dc5e7f18c8d36ac1d3d4753a87c98d0a
+// @require         https://yastatic.net/jquery/3.3.1/jquery.min.js#md5=a09e13ee94d51c524b7e2a728c7d4039
 // ==/UserScript==
 
 'use strict';
+
+// TODO: rewrite userscript for AJAX-site
 
 const akp = {
     currentKID: '',
