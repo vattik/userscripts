@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2022.10.18
+// @version         2022.12.28
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -11,8 +11,7 @@
 // @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @supportURL      https://github.com/vattik/userscripts/issues
 // @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
-// @match           *://*.kinopoisk.ru/film/*
-// @match           *://*.kinopoisk.ru/series/*
+// @match           *://www.kinopoisk.ru/*
 // @noframes
 // @grant           none
 // @require         https://yastatic.net/jquery/3.3.1/jquery.min.js#md5=a09e13ee94d51c524b7e2a728c7d4039
@@ -20,13 +19,16 @@
 
 'use strict';
 
-// TODO: rewrite userscript for AJAX-site
+// TODO: rewrite userscript with MutationObserver for AJAX-site
 
 const akp = {
     currentKID: '',
     htmlBtns: '',
     init: () => {
         const btnsInsert = setInterval(() => {
+            if (!/^\/(?:film|series)\/\d/i.test(location.pathname)) {
+                return;
+            }
             if (document.getElementById('akp-container') === null) {
                 // for new document
                 akp.buttons.generate();
@@ -45,7 +47,7 @@ const akp = {
             const kName = $('h1[itemprop="name"] > *:parent:eq(0)').text();
             const links = [].concat(
                 akp.getLinks(kID, kName, 'https://website.yandexcloud.net/kpact/#**SEARCH**'),
-                akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**')
+                // akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**')
                 // akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
                 // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
             );
