@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2022.12.28
+// @version         2022.12.29
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -53,7 +53,8 @@ const akp = {
             );
             let html = '';
             links.forEach((value, index) => {
-                html += `<a href="${value}" target="_blank">Смотреть (источник ${index+1})</a>\n`;
+                let rText = links.length > 1 ? ` (источник ${index+1})` : '';
+                html += `<a href="${value}" target="_blank">СМОТРЕТЬ БЕСПЛАТНО${rText}</a>\n`;
             });
             if (html) {
                 akp.htmlBtns = html;
@@ -79,9 +80,9 @@ const akp = {
         if (kID) {
             links.push( pattern.replace('**SEARCH**', kID) );
         }
-        if (kName) {
-            links.push( pattern.replace('**SEARCH**', encodeURIComponent(kName)) );
-        }
+        // if (kName) {
+        //     links.push( pattern.replace('**SEARCH**', encodeURIComponent(kName)) );
+        // }
         return links;
     },
     getKID: () => {
@@ -97,27 +98,35 @@ const akp = {
                 display: inline-flex;
                 align-items: center;
                 margin-bottom: 6px;
-                padding: 11px 32px;
+                padding: 15px 28px 13px;
                 line-height: 22px;
                 white-space: nowrap;
                 color: #fff;
                 text-decoration: none;
                 font-size: 16px;
-                font-weight: 500;
+                font-weight: 600;
                 font-family: Graphik Kinopoisk LC Web,Arial,Tahoma,Verdana,sans-serif;
-                border-radius: 4px;
-                background: linear-gradient(130.16deg,#f26100 34.4%,#f60 66.11%,#ff9400 96.37%);
+                border-radius: 8px;
+                background-color: #fa5501;
+                background-image: linear-gradient(270deg, rgba(255, 145, 89, 0) 48.44%, #ff9159 75.52%, rgba(255, 145, 89, 0) 100%);
+                background-repeat: no-repeat;
+                animation: bg-move linear 5s infinite;
+            }
+            @keyframes bg-move {
+                0%   { background-position: -500px 0; }
+                100% { background-position: 1000px 0; }
             }
             #akp-container a:before {
                 content: "";
                 display: inline-block;
                 width: 0;
                 height: 0;
-                margin-right: 9px;
+                margin-right: 11px;
+                margin-bottom: 2px;
                 border-color: transparent;
                 border-left-color: #fff;
                 border-style: solid;
-                border-width: 7px 0 7px 12px;
+                border-width: 8px 0 8px 15px;
             }
         `;
     }
