@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2022.4.10
+// @version         2023.1.10
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -13,6 +13,7 @@
 // @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
+// @noframes
 // @grant           none
 // @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.2/page-dom.js
 // @require         https://raw.githubusercontent.com/vattik/libs/main/kp-web/0.0.4/kp-web.js
@@ -46,7 +47,7 @@
                 font-size: 16px;
                 font-weight: 500;
                 font-family: Graphik Kinopoisk LC Web,Arial,Tahoma,Verdana,sans-serif;
-                border-radius: 4px;
+                border-radius: 28px;
                 background: linear-gradient(130.16deg,#769def 34.4%,#6689db 66.11%,#88aeff 96.37%);
             }
             #k2n-container a:before {
@@ -141,7 +142,7 @@
                 outputElement.id = 'k2n-container';
                 outputElement.dataset.nfo = nfoContentEncoded;
                 outputElement.innerHTML = outputHtml;
-                const outputRoot = document.querySelector('div[class*="styles_title__"]');
+                const outputRoot = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
                 outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
                 document.getElementById('k2n-view').addEventListener('click', function(e) {
                     e.preventDefault();
