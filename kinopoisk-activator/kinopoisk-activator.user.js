@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2022.12.29
+// @version         2023.1.9
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -63,7 +63,7 @@ const akp = {
         insert: () => {
             if (akp.htmlBtns) {
                 // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
-                $('div[class^="styles_title__"]').after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS()}</style></form>`);
+                $('div[class*="styles_header__"] div[class*="styles_title__"]').eq(0).after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS()}</style></form>`);
                 akp.currentKID = akp.getKID();
             }
         },
