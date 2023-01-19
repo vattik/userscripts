@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.1.9
+// @version         2023.1.18
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -62,9 +62,19 @@ const akp = {
         },
         insert: () => {
             if (akp.htmlBtns) {
-                // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
-                $('div[class*="styles_header__"] div[class*="styles_title__"]').eq(0).after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS()}</style></form>`);
-                akp.currentKID = akp.getKID();
+                let mobile = false;
+                let anchor = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
+                if (anchor === null) {
+                    anchor = document.querySelector(':is(div[class*="style_subtitle__"], div[class*="styles_subtitle__"]) ~ :is(div[class*="style_meta__"], div[class*="styles_meta__"])');
+                    if (anchor !== null) {
+                        mobile = true;
+                    }
+                }
+                if (anchor !== null) {
+                    // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
+                    $(anchor).after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS(mobile)}</style></form>`);
+                    akp.currentKID = akp.getKID();
+                }
             }
         },
         remove: () => {
@@ -89,10 +99,11 @@ const akp = {
         const kIDs = /\/(\d+)\//.exec(location.href);
         return kIDs !== null ? kIDs[1] : null;
     },
-    getCSS: () => {
+    getCSS: (mobile = false) => {
         return `
             #akp-container {
                 margin-bottom: 10px;
+                ${mobile === true ? 'text-align: center;' : ''}
             }
             #akp-container a {
                 display: inline-flex;
