@@ -2,9 +2,9 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.1.18
+// @version         2023.1.20
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
-// @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов
+// @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
 // @author          Alexey Mihaylov <citizen777@list.ru>
 // @license         MIT
 // @updateURL       https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
@@ -12,9 +12,8 @@
 // @supportURL      https://github.com/vattik/userscripts/issues
 // @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
 // @match           *://www.kinopoisk.ru/*
-// @noframes
 // @grant           none
-// @require         https://yastatic.net/jquery/3.3.1/jquery.min.js#md5=a09e13ee94d51c524b7e2a728c7d4039
+// @require         https://yastatic.net/jquery/3.3.1/jquery.min.js
 // ==/UserScript==
 
 'use strict';
