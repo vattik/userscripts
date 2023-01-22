@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2023.1.10
+// @version         2023.1.14
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -13,7 +13,6 @@
 // @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
 // @match           *://*.kinopoisk.ru/film/*
 // @match           *://*.kinopoisk.ru/series/*
-// @noframes
 // @grant           none
 // @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.2/page-dom.js
 // @require         https://raw.githubusercontent.com/vattik/libs/main/kp-web/0.0.4/kp-web.js
@@ -138,11 +137,14 @@
         outputHtml += `<a href="${outputFileURI}" download="${outputFileName}.nfo" title="${outputFileName}.nfo">Скачать .NFO (${Math.ceil(nfoContent.length/1000)} КБ)</a>\n`;
         const btnsInsert = setInterval(() => {
             if (document.getElementById('k2n-container') === null) {
+                const outputRoot = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
+                if (outputRoot === null) {
+                    return;
+                }
                 const outputElement = document.createElement('form');
                 outputElement.id = 'k2n-container';
                 outputElement.dataset.nfo = nfoContentEncoded;
                 outputElement.innerHTML = outputHtml;
-                const outputRoot = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
                 outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
                 document.getElementById('k2n-view').addEventListener('click', function(e) {
                     e.preventDefault();
