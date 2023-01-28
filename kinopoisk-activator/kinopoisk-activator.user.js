@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.1.20
+// @version         2023.1.23
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -13,10 +13,7 @@
 // @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
 // @match           *://www.kinopoisk.ru/*
 // @grant           none
-// @require         https://yastatic.net/jquery/3.3.1/jquery.min.js
 // ==/UserScript==
-
-'use strict';
 
 // TODO: rewrite userscript with MutationObserver for AJAX-site
 
@@ -43,7 +40,8 @@ const akp = {
     buttons: {
         generate: () => {
             const kID = akp.getKID();
-            const kName = $('h1[itemprop="name"] > *:parent:eq(0)').text();
+            const kNameNode = document.querySelector('h1[itemprop="name"] > *:first-child');
+            const kName = kNameNode === null ? '' : kNameNode.innerText;
             const links = [].concat(
                 akp.getLinks(kID, kName, 'https://website.yandexcloud.net/kpact/#**SEARCH**'),
                 // akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**')
@@ -62,16 +60,19 @@ const akp = {
         insert: () => {
             if (akp.htmlBtns) {
                 let mobile = false;
-                let anchor = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
-                if (anchor === null) {
-                    anchor = document.querySelector(':is(div[class*="style_subtitle__"], div[class*="styles_subtitle__"]) ~ :is(div[class*="style_meta__"], div[class*="styles_meta__"])');
-                    if (anchor !== null) {
+                let outputRoot = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
+                if (outputRoot === null) {
+                    outputRoot = document.querySelector(':is(div[class*="style_subtitle__"], div[class*="styles_subtitle__"]) ~ :is(div[class*="style_meta__"], div[class*="styles_meta__"])');
+                    if (outputRoot !== null) {
                         mobile = true;
                     }
                 }
-                if (anchor !== null) {
+                if (outputRoot !== null) {
                     // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
-                    $(anchor).after(`<form id="akp-container">${akp.htmlBtns}<style>${akp.getCSS(mobile)}</style></form>`);
+                    const outputElement = document.createElement('form');
+                    outputElement.id = 'akp-container';
+                    outputElement.innerHTML = `<style>${akp.getCSS(mobile)}</style>\n${akp.htmlBtns}`;
+                    outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
                     akp.currentKID = akp.getKID();
                 }
             }
@@ -142,6 +143,4 @@ const akp = {
     }
 };
 
-$(function() {
-    akp.init();
-});
+akp.init();
