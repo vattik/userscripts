@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.1.23
+// @version         2023.1.24
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -43,7 +43,7 @@ const akp = {
             const kNameNode = document.querySelector('h1[itemprop="name"] > *:first-child');
             const kName = kNameNode === null ? '' : kNameNode.innerText;
             const links = [].concat(
-                akp.getLinks(kID, kName, 'https://website.yandexcloud.net/kpact/#**SEARCH**'),
+                akp.getLinks(kID, kName, 'https://website.yandexcloud.net/kpact/?ver=' + GM.info.script.version + '#**SEARCH**'),
                 // akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**')
                 // akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
                 // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
