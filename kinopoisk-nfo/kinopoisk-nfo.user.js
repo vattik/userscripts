@@ -2,7 +2,7 @@
 // @name            KinoPoisk NFO
 // @name:ru         КиноПоиск NFO
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-nfo
-// @version         2023.1.14
+// @version         2023.1.15
 // @description     Generates NFO files with information about a movie or TV series
 // @description:ru  Генерирует файлы в формате NFO со сведениями о фильме или сериале
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -11,8 +11,8 @@
 // @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-nfo/kinopoisk-nfo.user.js
 // @supportURL      https://github.com/vattik/userscripts/issues
 // @icon            https://duckduckgo.com/i/kinopoisk.ru.ico
-// @match           *://*.kinopoisk.ru/film/*
-// @match           *://*.kinopoisk.ru/series/*
+// @match           *://www.kinopoisk.ru/film/*
+// @match           *://www.kinopoisk.ru/series/*
 // @grant           none
 // @require         https://raw.githubusercontent.com/vattik/libs/main/page-dom/0.0.2/page-dom.js
 // @require         https://raw.githubusercontent.com/vattik/libs/main/kp-web/0.0.4/kp-web.js
