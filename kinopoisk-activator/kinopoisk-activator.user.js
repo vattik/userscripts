@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.12.7
+// @version         2023.12.8
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -39,14 +39,15 @@ const akp = {
         }, 2000);
     },
     removeGarbage: () => {
-        const adBlockWarning = document.querySelector('[class*="styles_adBlockWarningRoot"]');
-        if (adBlockWarning) {
-            adBlockWarning.remove();
+        const adBlockCloseButton = document.querySelector('[class*="adBlockWarningRoot"] [class*="closeButton"]')
+            ?? PageDOM.findSingleNode('//*[ *[2][contains(normalize-space(),"блокировщик рекламы")] ]/*[1][self::button or @type="button"]');
+        if (adBlockCloseButton) {
+            adBlockCloseButton.click();
         }
         // below mobile version only
         const touchBottomBanner = document.querySelector('[id*="touch_bottom_banner"]');
         if (touchBottomBanner) {
-            touchBottomBanner.remove();
+            touchBottomBanner.style.display = 'none';
         }
         const iframes = document.getElementsByTagName('iframe');
         for (const iframe of iframes) {
@@ -166,3 +167,91 @@ const akp = {
 };
 
 akp.init();
+
+/*
+ * PageDOM JavaScript Library
+ * https://github.com/vattik/libs/tree/main/page-dom
+ */
+
+const PageDOM = {};
+PageDOM.version = '0.0.2-kpact';
+
+const xpathQuery = function(xpath, root = null) {
+    if (root === null) root = document;
+    const evaluator = new XPathEvaluator();
+    const expression = evaluator.createExpression(xpath);
+    const xpathResult = expression.evaluate(root, XPathResult.UNORDERED_NODE_ITERATOR_TYPE);
+    const result = [];
+    let node = xpathResult.iterateNext();
+    while (node) {
+        result.push(node);
+        node = xpathResult.iterateNext();
+    }
+    return result;
+};
+
+const findSingleNode = function(xpath, root = null, allowEmpty = true, regexp = null, clean = true) {
+    const nodes = xpathQuery(xpath, root);
+    if (nodes.length === 0) {
+        // console.log('node not found: ' + xpath);
+        return null;
+    }
+    if (nodes.length !== 1) {
+        // console.log(`multiple (${nodes.length}) nodes found: ${xpath}, expected single node`);
+        return null;
+    }
+    let nodeText = clean ? cleanXMLValue(nodes[0].textContent) : nodes[0].textContent;
+    if (regexp !== null) {
+        const matches = regexp.exec(nodeText);
+        if (matches === null) {
+            // console.log(`no match: [${nodeText}] with [${regexp}]`);
+            return null;
+        } else if (matches && matches.length === 1) {
+            nodeText = matches[0];
+        } else if (matches && matches.length > 1) {
+            nodeText = matches[1];
+        }
+    }
+    if (nodeText === '' && !allowEmpty) {
+        // console.log('node empty: ' + xpath);
+        return null;
+    }
+    return nodeText;
+};
+
+const findNodes = function(xpath, root = null, regexp = null, clean = true) {
+    const nodes = xpathQuery(xpath, root);
+    if (nodes.length === 0) {
+        // console.log('nodes not found: ' + xpath);
+        return [];
+    }
+    const result = [];
+    for (const node of nodes) {
+        const nodeText = clean ? cleanXMLValue(node.textContent) : node.textContent;
+        if (regexp !== null) {
+            const matches = regexp.exec(nodeText);
+            if (matches === null) {
+                // console.log(`no match: [${nodeText}] with [${regexp}]`);
+                result.push(null);
+            } else if (matches && matches.length === 1) {
+                result.push(matches[0]);
+            } else if (matches && matches.length > 1) {
+                result.push(matches[1]);
+            }
+        } else {
+            result.push(nodeText);
+        }
+    }
+    // console.log(`found ${nodes.length} nodes: ${xpath}`);
+    return result;
+};
+
+const cleanXMLValue = function(s) {
+    s = s.replace(/\s+/g, ' ');
+    s = s.replace(/^\s+/, '').replace(/\s+$/, ''); // trim
+    return s;
+};
+
+PageDOM.xpathQuery = xpathQuery;
+PageDOM.findSingleNode = findSingleNode;
+PageDOM.findNodes = findNodes;
