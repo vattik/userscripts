@@ -2,7 +2,7 @@
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
 // @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2023.12.15
+// @version         2025.6.28
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
 // @author          Alexey Mihaylov <citizen777@list.ru>
@@ -11,8 +11,14 @@
 // @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
 // @supportURL      https://github.com/vattik/userscripts/issues
 // @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
+// @match           *://website.yandexcloud.net/kpact/*
 // @match           *://www.kinopoisk.ru/*
-// @grant           none
+// @grant           GM_xmlhttpRequest
+// @connect         kinobox.tv
+// @connect         kinobox.in
+// @connect         kinohost.web.app
+// @connect         ddbb.lol
+// @connect         *
 // ==/UserScript==
 
 // TODO: rewrite userscript with MutationObserver for AJAX-site
@@ -168,7 +174,28 @@ const akp = {
     }
 };
 
-akp.init();
+const extraTools = {
+    init: () => {
+        if (typeof xhr_external === 'function') {
+            xhr_external = function (details, body, callback) {
+                if (details && details === 'CHECKING READY') {
+                    return true;
+                }
+                if (details && typeof details === 'object') {
+                    GM_xmlhttpRequest(details);
+                }
+            };
+            return;
+        }
+        setTimeout(extraTools.init, 1500); // бесконечно ждём, когда на веб-странице станет доступна нужная нам переменная
+    }
+};
+
+if (/^https?:\/\/website\.yandexcloud\.net\/kpact\//i.test(location.href)) {
+    extraTools.init();
+} else {
+    akp.init();
+}
 
 /*
  * PageDOM JavaScript Library
