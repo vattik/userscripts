@@ -1,286 +1,37 @@
 // ==UserScript==
 // @name            KinoPoisk Activator
 // @name:ru         Активатор КиноПоиска
-// @namespace       https://github.com/vattik/userscripts/tree/main/kinopoisk-activator
-// @version         2025.6.28
+// @namespace       https://www.kinopoisk.ru/
+// @version         2026.3.21
 // @description     Adds to site www.kinopoisk.ru ability to watch movies for free
 // @description:ru  Добавляет на сайт www.kinopoisk.ru возможность бесплатного просмотра фильмов и сериалов
-// @author          Alexey Mihaylov <citizen777@list.ru>
-// @license         MIT
-// @updateURL       https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
-// @downloadURL     https://raw.githubusercontent.com/vattik/userscripts/main/kinopoisk-activator/kinopoisk-activator.user.js
-// @supportURL      https://github.com/vattik/userscripts/issues
 // @icon            https://favicon.yandex.net/favicon/v2/https://www.kinopoisk.ru/?size=32
-// @match           *://website.yandexcloud.net/kpact/*
+// @downloadURL     https://url.drino.ru/kpact-userscript/
+// @updateURL       https://url.drino.ru/kpact-userscript-update/
 // @match           *://www.kinopoisk.ru/*
-// @grant           GM_xmlhttpRequest
+// @match           *://hd.kinopoisk.ru/*
+// @match           *://22c49c7de539-kpact.s3.ru1.storage.beget.cloud/*
+// @match           *://s3.ru1.storage.beget.cloud/22c49c7de539-kpact/*
+// @match           *://kpact.website.yandexcloud.net/*
+// @match           *://website.yandexcloud.net/kpact/*
+// @match           *://storage.yandexcloud.net/kpact/*
+// @match           *://kpact.s3.regru.cloud/*
+// @match           *://kpact.website.regru.cloud/*
+// @match           *://s3.regru.cloud/kpact/*
+// @match           *://kpact.website.twcstorage.ru/*
+// @match           *://s3.twcstorage.ru/kpact/*
+// @match           *://a6d8fd5d-a612-4b0f-aefe-c0e87ba1ee91.selstorage.ru/*
+// @match           *://kpact.hb.ru-msk.vkcloud-storage.ru/*
+// @match           *://kpact.s3-website.cloud.ru/*
+// @connect         kinopoisk.ru
 // @connect         kinobox.tv
 // @connect         kinobox.in
 // @connect         kinohost.web.app
 // @connect         ddbb.lol
 // @connect         *
+// @grant           GM_info
+// @grant           GM_xmlhttpRequest
+// @grant           unsafeWindow
 // ==/UserScript==
 
-// TODO: rewrite userscript with MutationObserver for AJAX-site
-
-const akp = {
-    currentKID: '',
-    htmlBtns: '',
-    init: () => {
-        const btnsInsert = setInterval(() => {
-            akp.removeGarbage();
-            if (!/^\/(?:film|series)\/\d/i.test(location.pathname)) {
-                return;
-            }
-            if (document.getElementById('akp-container') === null) {
-                // for new document
-                akp.buttons.generate();
-                akp.buttons.insert();
-            } else if (akp.getKID() && akp.currentKID && akp.getKID() !== akp.currentKID) {
-                // for AJAX-modified document
-                akp.buttons.remove();
-                akp.buttons.generate();
-                akp.buttons.insert();
-            }
-        }, 2000);
-    },
-    removeGarbage: () => {
-        let adBlockCloseButtons = document.querySelectorAll('[class*="adBlockWarningRoot"] [class*="closeButton"]');
-        if (adBlockCloseButtons.length === 0) {
-            adBlockCloseButtons = PageDOM.xpathQuery('//*[ *[2][contains(normalize-space(),"блокировщик рекламы")] ]/*[1][self::button or @type="button"]');
-        }
-        if (adBlockCloseButtons.length) {
-            adBlockCloseButtons[0].click();
-        }
-        // below mobile version only
-        const touchBottomBanner = document.querySelector('[id*="touch_bottom_banner"]');
-        if (touchBottomBanner) {
-            touchBottomBanner.style.display = 'none';
-        }
-        const iframes = document.getElementsByTagName('iframe');
-        for (const iframe of iframes) {
-            if (iframe.src !== '') {
-                continue;
-            }
-            const stayButton = iframe.contentWindow.document.getElementById('stay-button');
-            if (stayButton) {
-                stayButton.click();
-            }
-        }
-    },
-    buttons: {
-        generate: () => {
-            const kID = akp.getKID();
-            const kNameNode = document.querySelector('h1[itemprop="name"] > *:first-child');
-            const kName = kNameNode === null ? '' : kNameNode.innerText;
-            const links = [].concat(
-                akp.getLinks(kID, kName, 'https://website.yandexcloud.net/kpact/?manager=' + encodeURIComponent(GM_info.scriptHandler) + '&script=' + encodeURIComponent(GM_info.script.version) + '#**SEARCH**'),
-                // akp.getLinks(kID, kName, 'https://4h0y.gitlab.io/#**SEARCH**')
-                // akp.getLinks(kID, kName, 'https://4h0y.bitbucket.io/#**SEARCH**')
-                // akp.getLinks(kID, kName, 'https://kin-x.com/#**SEARCH**')
-            );
-            let html = '';
-            links.forEach((value, index) => {
-                let rText = links.length > 1 ? ` (источник ${index+1})` : '';
-                html += `<a href="${value}" target="_blank">СМОТРЕТЬ БЕСПЛАТНО${rText}</a>\n`;
-            });
-            if (html) {
-                akp.htmlBtns = html;
-            }
-        },
-        insert: () => {
-            if (akp.htmlBtns) {
-                let mobile = false;
-                let outputRoot = document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');
-                if (outputRoot === null) {
-                    outputRoot = document.querySelector(':is(div[class*="style_subtitle__"], div[class*="styles_subtitle__"]) ~ :is(div[class*="style_meta__"], div[class*="styles_meta__"])');
-                    if (outputRoot !== null) {
-                        mobile = true;
-                    }
-                }
-                if (outputRoot !== null) {
-                    // inserting in FORM/SECTION/ARTICLE/HEADER/FOOTER because any block element other than DIV is suitable
-                    const outputElement = document.createElement('form');
-                    outputElement.id = 'akp-container';
-                    outputElement.innerHTML = `<style>${akp.getCSS(mobile)}</style>\n${akp.htmlBtns}`;
-                    outputRoot.parentNode.insertBefore(outputElement, outputRoot.nextSibling);
-                    akp.currentKID = akp.getKID();
-                }
-            }
-        },
-        remove: () => {
-            akp.htmlBtns = '';
-            document.getElementById('akp-container').remove();
-        },
-    },
-    getLinks: (kID, kName, pattern) => {
-        if (!pattern) {
-            return [];
-        }
-        const links = [];
-        if (kID) {
-            links.push( pattern.replace('**SEARCH**', kID) );
-        }
-        // if (kName) {
-        //     links.push( pattern.replace('**SEARCH**', encodeURIComponent(kName)) );
-        // }
-        return links;
-    },
-    getKID: () => {
-        const kIDs = /\/(\d+)\//.exec(location.href);
-        return kIDs !== null ? kIDs[1] : null;
-    },
-    getCSS: (mobile = false) => {
-        return `
-            #akp-container {
-                margin-bottom: 10px;
-                ${mobile === true ? 'text-align: center;' : ''}
-            }
-            #akp-container a {
-                display: inline-flex;
-                align-items: center;
-                margin-bottom: 6px;
-                padding: 15px 28px 13px;
-                line-height: 22px;
-                white-space: nowrap;
-                color: #fff;
-                text-decoration: none;
-                font-size: 16px;
-                font-weight: 600;
-                font-family: Graphik Kinopoisk LC Web,Arial,Tahoma,Verdana,sans-serif;
-                border-radius: 8px;
-                background-color: #fa5501;
-                background-image: linear-gradient(270deg, rgba(255, 145, 89, 0) 48.44%, #ff9159 75.52%, rgba(255, 145, 89, 0) 100%);
-                background-repeat: no-repeat;
-                animation: bg-move linear 5s infinite;
-            }
-            @keyframes bg-move {
-                0%   { background-position: -500px 0; }
-                100% { background-position: 1000px 0; }
-            }
-            #akp-container a:before {
-                content: "";
-                display: inline-block;
-                width: 0;
-                height: 0;
-                margin-right: 11px;
-                margin-bottom: 2px;
-                border-color: transparent;
-                border-left-color: #fff;
-                border-style: solid;
-                border-width: 8px 0 8px 15px;
-            }
-        `;
-    }
-};
-
-const extraTools = {
-    init: () => {
-        if (typeof xhr_external === 'function') {
-            xhr_external = function (details, body, callback) {
-                if (details && details === 'CHECKING READY') {
-                    return true;
-                }
-                if (details && typeof details === 'object') {
-                    GM_xmlhttpRequest(details);
-                }
-            };
-            return;
-        }
-        setTimeout(extraTools.init, 1500); // бесконечно ждём, когда на веб-странице станет доступна нужная нам переменная
-    }
-};
-
-if (/^https?:\/\/website\.yandexcloud\.net\/kpact\//i.test(location.href)) {
-    extraTools.init();
-} else {
-    akp.init();
-}
-
-/*
- * PageDOM JavaScript Library
- * https://github.com/vattik/libs/tree/main/page-dom
- */
-
-const PageDOM = {};
-PageDOM.version = '0.0.2-kpact';
-
-const xpathQuery = function(xpath, root = null) {
-    if (root === null) root = document;
-    const evaluator = new XPathEvaluator();
-    const expression = evaluator.createExpression(xpath);
-    const xpathResult = expression.evaluate(root, XPathResult.UNORDERED_NODE_ITERATOR_TYPE);
-    const result = [];
-    let node = xpathResult.iterateNext();
-    while (node) {
-        result.push(node);
-        node = xpathResult.iterateNext();
-    }
-    return result;
-};
-
-const findSingleNode = function(xpath, root = null, allowEmpty = true, regexp = null, clean = true) {
-    const nodes = xpathQuery(xpath, root);
-    if (nodes.length === 0) {
-        // console.log('node not found: ' + xpath);
-        return null;
-    }
-    if (nodes.length !== 1) {
-        // console.log(`multiple (${nodes.length}) nodes found: ${xpath}, expected single node`);
-        return null;
-    }
-    let nodeText = clean ? cleanXMLValue(nodes[0].textContent) : nodes[0].textContent;
-    if (regexp !== null) {
-        const matches = regexp.exec(nodeText);
-        if (matches === null) {
-            // console.log(`no match: [${nodeText}] with [${regexp}]`);
-            return null;
-        } else if (matches && matches.length === 1) {
-            nodeText = matches[0];
-        } else if (matches && matches.length > 1) {
-            nodeText = matches[1];
-        }
-    }
-    if (nodeText === '' && !allowEmpty) {
-        // console.log('node empty: ' + xpath);
-        return null;
-    }
-    return nodeText;
-};
-
-const findNodes = function(xpath, root = null, regexp = null, clean = true) {
-    const nodes = xpathQuery(xpath, root);
-    if (nodes.length === 0) {
-        // console.log('nodes not found: ' + xpath);
-        return [];
-    }
-    const result = [];
-    for (const node of nodes) {
-        const nodeText = clean ? cleanXMLValue(node.textContent) : node.textContent;
-        if (regexp !== null) {
-            const matches = regexp.exec(nodeText);
-            if (matches === null) {
-                // console.log(`no match: [${nodeText}] with [${regexp}]`);
-                result.push(null);
-            } else if (matches && matches.length === 1) {
-                result.push(matches[0]);
-            } else if (matches && matches.length > 1) {
-                result.push(matches[1]);
-            }
-        } else {
-            result.push(nodeText);
-        }
-    }
-    // console.log(`found ${nodes.length} nodes: ${xpath}`);
-    return result;
-};
-
-const cleanXMLValue = function(s) {
-    s = s.replace(/\s+/g, ' ');
-    s = s.replace(/^\s+/, '').replace(/\s+$/, ''); // trim
-    return s;
-};
-
-PageDOM.xpathQuery = xpathQuery;
-PageDOM.findSingleNode = findSingleNode;
-PageDOM.findNodes = findNodes;
+!function(){"use strict";var t={version:"0.0.2-kpact"},e=function(t,e=null){null===e&&(e=document);const n=(new XPathEvaluator).createExpression(t).evaluate(e,XPathResult.UNORDERED_NODE_ITERATOR_TYPE),o=[];let r=n.iterateNext();for(;r;)o.push(r),r=n.iterateNext();return o},n=function(t){return(t=t.replace(/\s+/g," ")).replace(/^\s+/,"").replace(/\s+$/,"")};t.xpathQuery=e,t.findSingleNode=function(t,o=null,r=!0,s=null,l=!0){const i=e(t,o);if(0===i.length)return null;if(1!==i.length)return null;let a=l?n(i[0].textContent):i[0].textContent;if(null!==s){const t=s.exec(a);if(null===t)return null;t&&1===t.length?a=t[0]:t&&t.length>1&&(a=t[1])}return""!==a||r?a:null},t.findNodes=function(t,o=null,r=null,s=!0){const l=e(t,o);if(0===l.length)return[];const i=[];for(const e of l){const t=s?n(e.textContent):e.textContent;if(null!==r){const e=r.exec(t);null===e?i.push(null):e&&1===e.length?i.push(e[0]):e&&e.length>1&&i.push(e[1])}else i.push(t)}return i};var o={savedKID:"",htmlBtns:"",init:()=>{setInterval(()=>{o.removeGarbage(),/^\/(?:film|series)\/\d{1,9}(?:\W|$)/i.test(location.pathname)&&(null!==document.getElementById("akp-container")&&o.savedKID&&o.savedKID===o.getKID()||(o.savedKID&&o.savedKID!==o.getKID()&&o.buttons.remove(),o.buttons.insert()))},2e3)},removeGarbage:()=>{let e=document.querySelectorAll('[class*="adBlockWarningRoot"] [class*="closeButton"]');0===e.length&&(e=t.xpathQuery('//*[ *[2][contains(normalize-space(),"блокировщик рекламы")] ]/*[1][self::button or @type="button"]')),e.length&&e[0].click();const n=document.querySelector('[id*="touch_bottom_banner"]');n&&(n.style.display="none");const o=document.getElementsByTagName("iframe");for(const t of o){if(""!==t.src)continue;const e=t.contentWindow.document.getElementById("stay-button");e&&e.click()}},buttons:{generate:()=>{const t=o.getKID(),e=document.querySelector('h1[itemprop="name"] > *:first-child'),n=null===e?"":e.innerText,r=[].concat(o.getLinks(t,n,"https://url.drino.ru/kpact-website/?manager="+encodeURIComponent(GM_info.scriptHandler)+"&script="+encodeURIComponent(GM_info.script.version)+"#**SEARCH**"));let s="";r.forEach((t,e)=>{let n=r.length>1?` (источник ${e+1})`:"";s+=`<a href="${t}" target="_blank">СМОТРЕТЬ БЕСПЛАТНО${n}</a>\n`}),s&&(o.htmlBtns=s)},insert:()=>{if(o.buttons.generate(),o.htmlBtns){let t=!1,e=document.querySelector('div[class*="styles_header__"] div[class*="styles_title__"]');null===e&&(e=document.querySelector(':is(div[class*="style_subtitle__"], div[class*="styles_subtitle__"]) ~ :is(div[class*="style_meta__"], div[class*="styles_meta__"])'),null!==e&&(t=!0));const n=document.createElement("form");n.id="akp-container",n.innerHTML=`<style>${o.getCSS(t)}</style>\n${o.htmlBtns}`,null!==e?e.parentNode.insertBefore(n,e.nextSibling):(n.style.cssText="position: fixed; bottom: 5rem; left: 50%; translate: -50% 0; z-index: 2147483647;",document.body.appendChild(n)),o.savedKID=o.getKID()}},remove:()=>{o.htmlBtns="";const t=document.querySelectorAll("#akp-container");for(const e of t)e.remove()}},getLinks:(t,e,n)=>{if(!n)return[];const o=[];return t&&o.push(n.replace("**SEARCH**",t)),o},getKID:()=>{const t=/\/(\d+)\//.exec(location.href);return null!==t?t[1]:null},getCSS:(t=!1)=>`\n            #akp-container {\n                margin-bottom: 10px;\n                ${!0===t?"text-align: center;":""}\n            }\n            #akp-container a {\n                display: inline-flex;\n                align-items: center;\n                margin-bottom: 6px;\n                padding: 15px 28px 13px;\n                line-height: 22px;\n                white-space: nowrap;\n                color: #fff;\n                text-decoration: none;\n                font-size: 16px;\n                font-weight: 600;\n                font-family: Graphik Kinopoisk LC Web,Arial,Tahoma,Verdana,sans-serif;\n                border-radius: 8px;\n                background-color: #fa5501;\n                background-image: linear-gradient(270deg, rgba(255, 145, 89, 0) 48.44%, #ff9159 75.52%, rgba(255, 145, 89, 0) 100%);\n                background-repeat: no-repeat;\n                box-shadow: 0px 0px 15px 0px rgb(114 114 114);\n                animation: bg-move linear 5s infinite;\n            }\n            @keyframes bg-move {\n                0%   { background-position: -500px 0; }\n                100% { background-position: 1000px 0; }\n            }\n            #akp-container a:before {\n                content: "";\n                display: inline-block;\n                width: 0;\n                height: 0;\n                margin-right: 11px;\n                margin-bottom: 2px;\n                border-color: transparent;\n                border-left-color: #fff;\n                border-style: solid;\n                border-width: 8px 0 8px 15px;\n            }\n        `},r={init:()=>{"function"!=typeof unsafeWindow.xhr_external?setTimeout(r.init,1500):unsafeWindow.xhr_external=function(t,e,n){if(t&&"CHECKING READY"===t)return!0;t&&"object"==typeof t&&GM_xmlhttpRequest(t)}}};/^https?:\/\/22c49c7de539-kpact\.s3\.ru1\.storage\.beget\.cloud\//i.test(location.href)||/^https?:\/\/s3\.ru1\.storage\.beget\.cloud\/22c49c7de539-kpact\//i.test(location.href)||/^https?:\/\/kpact\.website\.yandexcloud\.net\//i.test(location.href)||/^https?:\/\/(?:website|storage)\.yandexcloud\.net\/kpact\//i.test(location.href)||/^https?:\/\/kpact\.(?:s3|website)\.regru\.cloud\//i.test(location.href)||/^https?:\/\/s3\.regru\.cloud\/kpact\//i.test(location.href)||/^https?:\/\/kpact\.website\.twcstorage\.ru\//i.test(location.href)||/^https?:\/\/s3\.twcstorage\.ru\/kpact\//i.test(location.href)||/^https?:\/\/a6d8fd5d-a612-4b0f-aefe-c0e87ba1ee91\.selstorage\.ru\//i.test(location.href)||/^https?:\/\/kpact\.hb\.ru-msk\.vkcloud-storage\.ru\//i.test(location.href)||/^https?:\/\/kpact\.s3-website\.cloud\.ru\//i.test(location.href)?r.init():o.init()}();
